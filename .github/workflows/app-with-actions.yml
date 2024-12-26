@@ -60,7 +60,7 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           source: app.jar
-          target: /home/ubuntu/app
+          target: /home/ubuntu
 
       # 3. Connect to EC2 and deploy the application
       - name: Connecting EC2 through SSH
@@ -80,7 +80,7 @@ jobs:
             rm -rf /home/ubuntu/app/deploy
             mkdir -p /home/ubuntu/app/deploy
             # Move jar file to deploy directory
-            mv /home/ubuntu/app/app.jar /home/ubuntu/app/deploy/app.jar
+            mv /home/ubuntu/app.jar /home/ubuntu/app/deploy/app.jar
             # Navigate to deploy directory
             cd /home/ubuntu/app/deploy
             # Stop the current application if running
