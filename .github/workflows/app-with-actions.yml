@@ -44,14 +44,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
-
+  
     steps:
       # 1. Download the artifact
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: app.jar
-
+  
       # 2. Transfer jar file to EC2
       - name: From GitHub Actions to AWS EC2 through SCP
         uses: appleboy/scp-action@v0.1.7
@@ -61,7 +61,7 @@ jobs:
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           source: app.jar
           target: /home/ubuntu
-
+  
       # 3. Connect to EC2 and deploy the application
       - name: Connecting EC2 through SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -75,16 +75,31 @@ jobs:
             if ! java -version 2>&1 | grep -q "17"; then
               sudo apt update
               sudo apt install -y openjdk-17-jdk
+              echo "JDK 17 installed."
+            else
+              echo "JDK 17 already installed."
             fi
+  
+            # Check if app.jar exists
+            if [ ! -f /home/ubuntu/app.jar ]; then
+              echo "Error: app.jar not found!"
+              exit 1
+            fi
+  
             # Clean up previous deployment
             rm -rf /home/ubuntu/app/deploy
             mkdir -p /home/ubuntu/app/deploy
+  
             # Move jar file to deploy directory
             mv /home/ubuntu/app.jar /home/ubuntu/app/deploy/app.jar
+  
             # Navigate to deploy directory
             cd /home/ubuntu/app/deploy
+  
             # Stop the current application if running
             sudo fuser -k -n tcp 8080 || true
+            echo "Port 8080 cleared."
+  
             # Run the new application
             nohup java -jar app.jar > ./output.log 2>&1 &
-            
+            echo "Application started, check output.log for details."
