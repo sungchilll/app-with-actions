@@ -103,4 +103,3 @@ jobs:
             # Run the new application
             nohup java -jar app.jar > ./output.log 2>&1 &
             echo "Application started, check output.log for details."
-            rm -rf /home/ubuntu/app
