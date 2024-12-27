@@ -7,7 +7,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout repository
       - uses: actions/checkout@v4
+
+      # Set up JDK
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -15,34 +18,50 @@ jobs:
           distribution: "temurin"
           cache: maven
 
+      # Generate application.properties
+      - name: Generate application.properties
+        run: |
+          echo "spring.datasource.url=jdbc:mysql://mysql:3306/action" > src/main/resources/application.properties
+          echo "spring.datasource.username=${{ secrets.DB_USERNAME }}" >> src/main/resources/application.properties
+          echo "spring.datasource.password=${{ secrets.DB_PASSWORD }}" >> src/main/resources/application.properties
+          echo "spring.jpa.hibernate.ddl-auto=update" >> src/main/resources/application.properties
+
+      # Build with Maven
       - name: Build with Maven
         run: mvn -B package --file pom.xml
 
+      # Rename JAR file
       - name: Naming jar file
         run: mv ./target/*.jar ./target/app.jar
 
+      # Check jar file
       - name: Check jar file
         run: ls ./target
 
+      # Upload artifact
       - uses: actions/upload-artifact@v4
         with:
           name: app
           path: ./target/*.jar
 
+      # Login to Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Set up QEMU for cross-platform builds
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
         with:
           platforms: all
 
+      # Set up Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # Build and push Docker image
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -56,12 +75,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Execute deployment script
+      # Copy docker-compose.yml to EC2
+      - name: Copy docker-compose.yml
+        run: |
+          scp docker-compose.yml ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/docker-compose.yml
+
+      # Execute deployment script
+      - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
+          env:
+            DB_USERNAME: "${{ secrets.DB_USERNAME }}"
+            DB_PASSWORD: "${{ secrets.DB_PASSWORD }}"
+            MYSQL_ROOT_PASSWORD: "${{ secrets.MYSQL_ROOT_PASSWORD }}"
           script: |
             if ! java -version 2>&1 | grep -q "17"; then
               sudo apt update
@@ -74,8 +103,7 @@ jobs:
             else
               echo "JDK 17 already installed."
             fi
-            if ! command -v docker &> /dev/null
-            then 
+            if ! command -v docker &> /dev/null; then
               echo "Docker is not installed. Installing Docker..."
               sudo apt update
               sudo apt install -y docker.io
@@ -85,20 +113,27 @@ jobs:
             else
               echo "Docker is already installed."
             fi
+            if ! command -v docker-compose &> /dev/null; then
+              echo "Docker Compose is not installed. Installing Docker Compose..."
+              sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+              echo "Docker Compose installed successfully."
+            else
+              echo "Docker Compose is already installed."
+            fi
+            # Clean up any existing containers
             CONTAINER_NAME="app-with-actions"
             if [ "$(sudo docker ps -q -f name=$CONTAINER_NAME)" ]; then
               echo "Stopping and removing existing container..."
               sudo docker stop $CONTAINER_NAME
               sudo docker rm $CONTAINER_NAME
             fi
-            IMAGE_NAME="${{ secrets.DOCKERHUB_USERNAME }}/app-with-actions:v1.0"
-            echo "Pulling Docker image: $IMAGE_NAME..."
-            sudo docker pull $IMAGE_NAME
-            sudo fuser -k -n tcp 8080 || true
-            echo "Running Docker container..."
-            sudo docker run -d \
-              --name $CONTAINER_NAME \
-              -p 8080:8080 \
-              $IMAGE_NAME
-            echo "Container is running. Use the following command to check logs:"
-            echo "sudo docker logs -f $CONTAINER_NAME"
+            MYSQL_CONTAINER="mysql"
+            if [ "$(sudo docker ps -q -f name=$MYSQL_CONTAINER)" ]; then
+              echo "Stopping and removing existing MySQL container..."
+              sudo docker stop $MYSQL_CONTAINER
+              sudo docker rm $MYSQL_CONTAINER
+            fi
+            # Run Docker Compose
+            echo "Running Docker Compose..."
+            sudo docker-compose -f ~/docker-compose.yml up -d
