@@ -87,19 +87,24 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
-          env:
-            DB_USERNAME: "${{ secrets.DB_USERNAME }}"
-            DB_PASSWORD: "${{ secrets.DB_PASSWORD }}"
-            MYSQL_ROOT_PASSWORD: "${{ secrets.MYSQL_ROOT_PASSWORD }}"
           script: |
-            echo "DB_USERNAME=${DB_USERNAME}"
-            echo "DB_PASSWORD=${DB_PASSWORD}"
-            echo "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}"
-            # Ensure environment variables are available
+            # Export Secrets as variables
+            export DB_USERNAME="${{ secrets.DB_USERNAME }}"
+            export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            export MYSQL_ROOT_PASSWORD="${{ secrets.MYSQL_ROOT_PASSWORD }}"
+            
+            # Debugging: Print variables (Optional, remove in production)
+            echo "DB_USERNAME=$DB_USERNAME"
+            echo "DB_PASSWORD=$DB_PASSWORD"
+            echo "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD"
+
+            # Ensure variables are not empty
             if [[ -z "$DB_USERNAME" || -z "$DB_PASSWORD" || -z "$MYSQL_ROOT_PASSWORD" ]]; then
               echo "One or more environment variables are missing!"
               exit 1
             fi
+
+            # Install required software
             if ! java -version 2>&1 | grep -q "17"; then
               sudo apt update
               sudo apt install -y openjdk-17-jdk
@@ -116,4 +121,13 @@ jobs:
               sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
             fi
-            sudo docker-compose -f ~/docker-compose.yml up -d
+
+            # Create environment file for docker-compose
+            echo "Creating environment file..."
+            echo "DB_USERNAME=$DB_USERNAME" > ~/env.list
+            echo "DB_PASSWORD=$DB_PASSWORD" >> ~/env.list
+            echo "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD" >> ~/env.list
+
+            # Deploy using docker-compose
+            echo "Running docker-compose..."
+            sudo docker-compose --env-file ~/env.list -f ~/docker-compose.yml up -d
