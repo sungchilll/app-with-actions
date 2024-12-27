@@ -1,6 +1,6 @@
 name: App With Github Actions with Docker CI/CD
 
-on: push
+on: workflow_dispatch
 
 jobs:
   ci:
@@ -92,48 +92,28 @@ jobs:
             DB_PASSWORD: "${{ secrets.DB_PASSWORD }}"
             MYSQL_ROOT_PASSWORD: "${{ secrets.MYSQL_ROOT_PASSWORD }}"
           script: |
+            echo "DB_USERNAME=${DB_USERNAME}"
+            echo "DB_PASSWORD=${DB_PASSWORD}"
+            echo "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}"
+            # Ensure environment variables are available
+            if [[ -z "$DB_USERNAME" || -z "$DB_PASSWORD" || -z "$MYSQL_ROOT_PASSWORD" ]]; then
+              echo "One or more environment variables are missing!"
+              exit 1
+            fi
             if ! java -version 2>&1 | grep -q "17"; then
               sudo apt update
               sudo apt install -y openjdk-17-jdk
               echo "JDK 17 installed."
-              echo 'JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"' | sudo tee -a /etc/environment
-              echo 'PATH="$JAVA_HOME/bin:$PATH"' | sudo tee -a /etc/environment
-              source /etc/environment
-              echo "JAVA_HOME set to $JAVA_HOME"
-            else
-              echo "JDK 17 already installed."
             fi
             if ! command -v docker &> /dev/null; then
-              echo "Docker is not installed. Installing Docker..."
-              sudo apt update
+              echo "Installing Docker..."
               sudo apt install -y docker.io
               sudo systemctl start docker
               sudo systemctl enable docker
-              echo "Docker installed successfully."
-            else
-              echo "Docker is already installed."
             fi
             if ! command -v docker-compose &> /dev/null; then
-              echo "Docker Compose is not installed. Installing Docker Compose..."
+              echo "Installing Docker Compose..."
               sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
               sudo chmod +x /usr/local/bin/docker-compose
-              echo "Docker Compose installed successfully."
-            else
-              echo "Docker Compose is already installed."
             fi
-            # Clean up any existing containers
-            CONTAINER_NAME="app-with-actions"
-            if [ "$(sudo docker ps -q -f name=$CONTAINER_NAME)" ]; then
-              echo "Stopping and removing existing container..."
-              sudo docker stop $CONTAINER_NAME
-              sudo docker rm $CONTAINER_NAME
-            fi
-            MYSQL_CONTAINER="mysql"
-            if [ "$(sudo docker ps -q -f name=$MYSQL_CONTAINER)" ]; then
-              echo "Stopping and removing existing MySQL container..."
-              sudo docker stop $MYSQL_CONTAINER
-              sudo docker rm $MYSQL_CONTAINER
-            fi
-            # Run Docker Compose
-            echo "Running Docker Compose..."
             sudo docker-compose -f ~/docker-compose.yml up -d
