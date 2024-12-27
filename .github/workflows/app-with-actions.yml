@@ -98,8 +98,7 @@ jobs:
   
             # Stop the current application if running
             sudo fuser -k -n tcp 8080 || true
-            echo "Port 8080 cleared."
+            echo "Port 8080 cleared!"
   
             # Run the new application
             nohup java -jar app.jar > ./output.log 2>&1 &
-            echo "Application started, check output.log for details."
