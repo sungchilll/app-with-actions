@@ -85,20 +85,29 @@ jobs:
             else
               echo "Docker is already installed."
             fi
+            if ! groups $USER | grep -q "\bdocker\b"; then
+              echo "Adding user to the docker group..."
+              sudo groupadd docker || true
+              sudo usermod -aG docker $USER
+              echo "User added to the docker group. Please log out and log back in for the changes to take effect."
+            else
+              echo "User is already in the docker group."
+            fi
+            newgrp docker
             CONTAINER_NAME="app-with-actions"
-            if [ "$(sudo docker ps -q -f name=$CONTAINER_NAME)" ]; then
-                echo "Stopping and removing existing container..."
-                sudo docker stop $CONTAINER_NAME
-                sudo docker rm $CONTAINER_NAME
+            if [ "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
+              echo "Stopping and removing existing container..."
+              docker stop $CONTAINER_NAME
+              docker rm $CONTAINER_NAME
             fi
             IMAGE_NAME="sungchilll/app-with-actions:v1.0"
             echo "Pulling Docker image: $IMAGE_NAME..."
-            sudo docker pull $IMAGE_NAME
+            docker pull $IMAGE_NAME
             sudo fuser -k -n tcp 8080 || true
             echo "Running Docker container..."
-            sudo docker run -d \
+            docker run -d \
               --name $CONTAINER_NAME \
               -p 8080:8080 \
               $IMAGE_NAME
             echo "Container is running. Use the following command to check logs:"
-            echo "sudo docker logs -f $CONTAINER_NAME"
+            echo "docker logs -f $CONTAINER_NAME"
