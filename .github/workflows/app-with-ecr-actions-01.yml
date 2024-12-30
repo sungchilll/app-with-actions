@@ -25,7 +25,7 @@ jobs:
         aws-region: us-east-1
 
     - name: Login to Amazon ECR Private
-      id: login-ecr-public
+      id: login-ecr-private
       uses: aws-actions/amazon-ecr-login@v2
       with:
         registry-type: private
@@ -37,6 +37,6 @@ jobs:
         REPOSITORY: first-private-ecr
         IMAGE_TAG: latest
       run: |
-        aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
+        aws ecr get-login-password --region us-northeast-2 | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
         docker build -t $REGISTRY_ALIAS/$REPOSITORY:$IMAGE_TAG .
         docker push $REGISTRY_ALIAS/$REPOSITORY:$IMAGE_TAG
