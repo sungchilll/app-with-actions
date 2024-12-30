@@ -37,6 +37,6 @@ jobs:
         # REPOSITORY: first-private-ecr
         IMAGE_TAG: latest
       run: |
-        aws ecr get-login-password --region us-northeast-2 | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
+        aws ecr get-login-password --region us-heast-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
         docker build -t $REGISTRY_ALIAS:$IMAGE_TAG .
         docker push $REGISTRY_ALIAS:$IMAGE_TAG
