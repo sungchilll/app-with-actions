@@ -113,10 +113,12 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         script: |
-            export DB_USERNAME="${{ secrets.DB_USERNAME }}"
-            export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
-            export DOCKERHUB_USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
-            export MYSQL_ROOT_PASSWORD="${{ secrets.MYSQL_ROOT_PASSWORD }}"
+            cat <<EOF > /home/ubuntu/.env
+            MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+            DB_USERNAME=${DB_USERNAME}
+            DB_PASSWORD=${DB_PASSWORD}
+            DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
+            EOF
             echo "Environment variables set."
 
             # JDK 설치 확인
@@ -147,9 +149,9 @@ jobs:
             # docker-compose.yml 확인 및 실행
             cd /home/ubuntu
             if [[ -f "docker-compose.yml" ]]; then
-              sudo docker-compose down
+              sudo docker-compose --env-file .env down
               sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/app-with-actions
-              sudo docker-compose up -d
+              sudo docker-compose --env-file .env up -d
               sudo docker image prune -a -f
               echo "Deployment completed."
             else
