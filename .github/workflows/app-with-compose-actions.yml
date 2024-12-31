@@ -75,13 +75,13 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: docker-compose.yml
-        path: ./docker-compose.yml
+        path: ./
       
     - name: Download Dockerfile
       uses: actions/download-artifact@v4
       with:
         name: Dockerfile
-        path: ./Dockerfile
+        path: ./
     - name: Verify Dockerfile in Repository
       run: ls -l ./Dockerfile
 
