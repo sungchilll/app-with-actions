@@ -101,11 +101,11 @@ jobs:
               export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
               echo "DB_USERNAME=$DB_USERNAME"
               echo "DB_PASSWORD=$DB_PASSWORD"
-              echo "MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD"
+              echo "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}"
               echo "DOCKERHUB_USERNAME=$DOCKERHUB_USERNAME"
               echo "DOCKERHUB_USERNAME{}=${DOCKERHUB_USERNAME}"
 
-              if [[ -z "$DB_USERNAME" || -z "$DB_PASSWORD" || -z "$MYSQL_ROOT_PASSWORD" ]]; then
+              if [[ -z "$DB_USERNAME" || -z "$DB_PASSWORD" || -z "${MYSQL_ROOT_PASSWORD}" ]]; then
                 echo "One or more environment variables are missing!"
                 exit 1
               fi
