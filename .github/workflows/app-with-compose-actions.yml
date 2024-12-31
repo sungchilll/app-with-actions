@@ -98,7 +98,7 @@ jobs:
               export DB_USERNAME="${{ secrets.DB_USERNAME }}"
               export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
               export DOCKERHUB_USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
-              export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+              export MYSQL_ROOT_PASSWORD="${{ secrets.MYSQL_ROOT_PASSWORD }}"
               echo "DB_USERNAME=$DB_USERNAME"
               echo "DB_PASSWORD=$DB_PASSWORD"
               echo "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}"
