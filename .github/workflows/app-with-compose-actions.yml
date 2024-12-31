@@ -71,73 +71,77 @@ jobs:
     needs: ci
     runs-on: ubuntu-latest
     steps:
-      - name: From Github Actions to AWS EC2 through SCP
-        uses: appleboy/scp-action@v0.1.7
-        with: 
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          source: Dockerfile
-          target: /home/ubuntu
+    - name: Verify Dockerfile in Repository
+      run: ls -l ./Dockerfile
 
-      - name: From Github Actions to AWS EC2 through SCP
-        uses: appleboy/scp-action@v0.1.7
-        with: 
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          source: docker-compose.yml
-          target: /home/ubuntu
+    - name: Verify docker-compose.yml in Repository
+      run: ls -l ./docker-compose.yml
 
-      - name: Execute deployment script
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_PRIVATE_KEY }}
-          script: |
-              export DB_USERNAME="${{ secrets.DB_USERNAME }}"
-              export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
-              export DOCKERHUB_USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
-              export MYSQL_ROOT_PASSWORD="${{ secrets.MYSQL_ROOT_PASSWORD }}"
-              echo "DB_USERNAME=$DB_USERNAME"
-              echo "DB_PASSWORD=$DB_PASSWORD"
-              echo "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}"
-              echo "DOCKERHUB_USERNAME=$DOCKERHUB_USERNAME"
-              echo "DOCKERHUB_USERNAME{}=${DOCKERHUB_USERNAME}"
+    - name: Upload Dockerfile to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with: 
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_PRIVATE_KEY }}
+        source: ./Dockerfile
+        target: /home/ubuntu/
 
-              if [[ -z "$DB_USERNAME" || -z "$DB_PASSWORD" || -z "${MYSQL_ROOT_PASSWORD}" ]]; then
-                echo "One or more environment variables are missing!"
-                exit 1
-              fi
+    - name: Upload docker-compose.yml to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with: 
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_PRIVATE_KEY }}
+        source: ./docker-compose.yml
+        target: /home/ubuntu/
 
-              if ! java -version 2>&1 | grep -q "17"; then
-                sudo apt update
-                sudo apt install -y openjdk-17-jdk
-                echo "JDK 17 installed."
-                echo 'JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"' | sudo tee -a /etc/environment
-                source /etc/environment
-                echo $JAVA_HOME
-              fi
-              if ! command -v docker &> /dev/null; then
-                echo "Installing Docker..."
-                sudo apt install -y docker.io
-                sudo systemctl start docker
-                sudo systemctl enable docker
-              fi
-              if ! command -v docker-compose &> /dev/null; then
-                echo "Installing Docker Compose..."
-                sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-                sudo chmod +x /usr/local/bin/docker-compose
-              fi
+    - name: Execute Deployment Script on EC2
+      uses: appleboy/ssh-action@v1.2.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_PRIVATE_KEY }}
+        script: |
+            export DB_USERNAME="${{ secrets.DB_USERNAME }}"
+            export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            export DOCKERHUB_USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
+            export MYSQL_ROOT_PASSWORD="${{ secrets.MYSQL_ROOT_PASSWORD }}"
+            echo "Environment variables set."
 
-              ll
-              if [[ -f "docker-compose.yml" ]]; then
-                sudo docker-compose down
-                sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/app-with-actions
-                sudo docker-compose up -d
-                sudo docker image prune -a -f
-              else
-                echo "Error: docker-compose.yml not found!"
-                exit 1
-              fi
+            # JDK 설치 확인
+            if ! java -version 2>&1 | grep -q "17"; then
+              sudo apt update
+              sudo apt install -y openjdk-17-jdk
+              echo 'JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"' | sudo tee -a /etc/environment
+              source /etc/environment
+              echo "JDK 17 installed and JAVA_HOME set."
+            fi
+
+            # Docker 설치 확인
+            if ! command -v docker &> /dev/null; then
+              echo "Installing Docker..."
+              sudo apt update
+              sudo apt install -y docker.io
+              sudo systemctl start docker
+              sudo systemctl enable docker
+            fi
+
+            # Docker Compose 설치 확인
+            if ! command -v docker-compose &> /dev/null; then
+              echo "Installing Docker Compose..."
+              sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+            fi
+
+            # docker-compose.yml 확인 및 실행
+            cd /home/ubuntu
+            if [[ -f "docker-compose.yml" ]]; then
+              sudo docker-compose down
+              sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/app-with-actions
+              sudo docker-compose up -d
+              sudo docker image prune -a -f
+              echo "Deployment completed."
+            else
+              echo "Error: docker-compose.yml not found in /home/ubuntu!"
+              exit 1
+            fi
