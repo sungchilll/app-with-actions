@@ -71,6 +71,17 @@ jobs:
     needs: ci
     runs-on: ubuntu-latest
     steps:
+    - name: Download docker-compose.yml
+      uses: actions/download-artifact@v4
+      with:
+        name: docker-compose.yml
+        path: ./docker-compose.yml
+      
+    - name: Download Dockerfile
+      uses: actions/download-artifact@v4
+      with:
+        name: Dockerfile
+        path: ./Dockerfile
     - name: Verify Dockerfile in Repository
       run: ls -l ./Dockerfile
 
