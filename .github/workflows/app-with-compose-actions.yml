@@ -87,6 +87,11 @@ jobs:
         with:
           name: Dockerfile
           path: ./Dockerfile
+      
+      - name: Upload necessary files to EC2
+        run: |
+          scp -i ~/.ssh/id_rsa docker-compose.yml ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/docker-compose.yml
+          scp -i ~/.ssh/id_rsa Dockerfile ${{ secrets.EC2_USERNAME }}@${{ secrets.EC2_HOST }}:~/Dockerfile
 
       - name: Execute deployment script
         uses: appleboy/ssh-action@v1.2.0
@@ -126,13 +131,17 @@ jobs:
               fi
               if ! command -v docker-compose &> /dev/null; then
                 echo "Installing Docker Compose..."
-                sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
                 sudo chmod +x /usr/local/bin/docker-compose
               fi
 
-              cd
-              sudo chmod +x docker-compose.yml
-              sudo docker-compose down
-              sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/app-with-actions
-              sudo docker-compose up -d
-              sudo docker image prune -a -f
+              ll
+              if [[ -f "docker-compose.yml" ]]; then
+                sudo docker-compose down
+                sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/app-with-actions
+                sudo docker-compose up -d
+                sudo docker image prune -a -f
+              else
+                echo "Error: docker-compose.yml not found!"
+                exit 1
+              fi
