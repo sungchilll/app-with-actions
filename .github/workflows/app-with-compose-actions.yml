@@ -121,6 +121,7 @@ jobs:
             DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
             EOF
             echo "Environment variables set."
+            echo "DB_USERNAME = "$DB_USERNAME
 
             cat <<EOF > /home/${EC2_USERNAME}/init.sql
             USE mysql;
