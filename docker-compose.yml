@@ -8,9 +8,7 @@ services:
       MYSQL_USER: ${DB_USERNAME}
       MYSQL_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - type: bind
-        source: /home/{EC2_USERNAME}/
-        target: /docker-entrypoint-initdb.d
+      - /home/${EC2_USERNAME}/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - 3306:3306
     healthcheck:
