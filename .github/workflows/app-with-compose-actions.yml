@@ -43,12 +43,6 @@ jobs:
         name: docker-compose.yml
         path: ./docker-compose.yml
 
-    - name: Upload Dockerfile artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: Dockerfile
-        path: ./Dockerfile
-
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
@@ -76,27 +70,9 @@ jobs:
       with:
         name: docker-compose.yml
         path: ./
-      
-    - name: Download Dockerfile
-      uses: actions/download-artifact@v4
-      with:
-        name: Dockerfile
-        path: ./
-
-    - name: Verify Dockerfile in Repository
-      run: ls -l ./Dockerfile
 
     - name: Verify docker-compose.yml in Repository
       run: ls -l ./docker-compose.yml
-
-    - name: Upload Dockerfile to EC2
-      uses: appleboy/scp-action@v0.1.7
-      with: 
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_PRIVATE_KEY }}
-        source: ./Dockerfile
-        target: /home/${{ secrets.EC2_USERNAME }}/
 
     - name: Upload docker-compose.yml to EC2
       uses: appleboy/scp-action@v0.1.7
@@ -155,8 +131,15 @@ jobs:
               \`name\` VARCHAR(255) NOT NULL,
               PRIMARY KEY (\`id\`)
             ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-            EOF
 
+            -- 더미 데이터
+            INSERT INTO Student (name) VALUES 
+            ('Alice'),
+            ('Bob'),
+            ('Charlie'),
+            ('Diana'),
+            ('Ethan');
+            EOF
 
             # JDK 설치 확인
             if ! java -version 2>&1 | grep -q "17"; then
