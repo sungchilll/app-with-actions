@@ -114,7 +114,7 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         script: |
-            export EC2_USERNAME=EC2_USERNAME=${{ secrets.EC2_USERNAME }}
+            export EC2_USERNAME=${{ secrets.EC2_USERNAME }}
             export MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
             export DB_USERNAME=${{ secrets.DB_USERNAME }}
             export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
@@ -134,12 +134,15 @@ jobs:
             sudo cat <<EOF > /home/${{ secrets.EC2_USERNAME }}/init.sql
             USE mysql;
 
+            -- 기존 사용자 삭제
+            DROP USER IF EXISTS '${DB_USERNAME}'@'%';
+
             -- 사용자 생성
-            CREATE USER '${DB_USERNAME}'@'%' IDENTIFIED WITH mysql_native_password BY '${DB_PASSWORD}';
+            CREATE USER '${DB_USERNAME}'@'%' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';
             FLUSH PRIVILEGES;
 
             -- 데이터베이스 생성
-            CREATE DATABASE app;
+            CREATE DATABASE IF NOT EXISTS app;
             GRANT ALL PRIVILEGES ON app.* TO '${DB_USERNAME}'@'%';
             FLUSH PRIVILEGES;
 
@@ -147,7 +150,7 @@ jobs:
             USE app;
 
             -- 테이블 생성
-            CREATE TABLE \`Student\` (
+            CREATE TABLE IF NOT EXISTS \`Student\` (
               \`id\` BIGINT NOT NULL AUTO_INCREMENT,
               \`name\` VARCHAR(255) NOT NULL,
               PRIMARY KEY (\`id\`)
@@ -181,7 +184,7 @@ jobs:
             fi
 
             # docker-compose.yml 확인 및 실행
-            cd /home/ubuntu
+            cd /home/${EC2_USERNAME}
             if [[ -f "docker-compose.yml" ]]; then
               sudo docker-compose --env-file .env down
               sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/app-with-actions
@@ -189,6 +192,6 @@ jobs:
               sudo docker image prune -a -f
               echo "Deployment completed."
             else
-              echo "Error: docker-compose.yml not found in /home/ubuntu!"
+              echo "Error: docker-compose.yml not found in /home/${EC2_USERNAME}!"
               exit 1
             fi
