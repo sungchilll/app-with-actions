@@ -132,13 +132,6 @@ jobs:
               PRIMARY KEY (\`id\`)
             ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-            -- 더미 데이터
-            INSERT INTO Student (name) VALUES 
-            ('Alice'),
-            ('Bob'),
-            ('Charlie'),
-            ('Diana'),
-            ('Ethan');
             EOF
 
             # JDK 설치 확인
