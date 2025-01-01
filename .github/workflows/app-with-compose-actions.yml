@@ -49,6 +49,12 @@ jobs:
         name: Dockerfile
         path: ./Dockerfile
 
+    - name: Upload init.sql artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: initdb
+        path: ./src/main/resources/static/sql/init.sql
+
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
@@ -82,11 +88,21 @@ jobs:
       with:
         name: Dockerfile
         path: ./
+
+    - name: Download init.sql
+      uses: actions/download-artifact@v4
+      with:
+        name: initdb
+        path: ./
+
     - name: Verify Dockerfile in Repository
       run: ls -l ./Dockerfile
 
     - name: Verify docker-compose.yml in Repository
       run: ls -l ./docker-compose.yml
+    
+    - name: Verify init.sql in Repository
+      run: ls -l ./init.sql
 
     - name: Upload Dockerfile to EC2
       uses: appleboy/scp-action@v0.1.7
@@ -95,7 +111,7 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         source: ./Dockerfile
-        target: /home/ubuntu/
+        target: /home/${EC2_USERNAME}/
 
     - name: Upload docker-compose.yml to EC2
       uses: appleboy/scp-action@v0.1.7
@@ -104,7 +120,16 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         source: ./docker-compose.yml
-        target: /home/ubuntu/
+        target: /home/${EC2_USERNAME}/
+      
+    - name: Upload init.sql to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with: 
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_PRIVATE_KEY }}
+        source: ./init.sql
+        target: /home/${EC2_USERNAME}/
 
     - name: Execute Deployment Script on EC2
       uses: appleboy/ssh-action@v1.2.0
