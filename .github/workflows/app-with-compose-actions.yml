@@ -114,7 +114,7 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         script: |
-            cat <<EOF > /home/${EC2_USERNAME}/.env
+            sudo cat <<EOF > /home/${EC2_USERNAME}/.env
             MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
             DB_USERNAME=${DB_USERNAME}
             DB_PASSWORD=${DB_PASSWORD}
@@ -123,7 +123,7 @@ jobs:
             echo "Environment variables set."
             echo "DB_USERNAME = "$DB_USERNAME
 
-            cat <<EOF > /home/${EC2_USERNAME}/init.sql
+            sudo cat <<EOF > /home/${EC2_USERNAME}/init.sql
             USE mysql;
 
             -- 사용자 생성
