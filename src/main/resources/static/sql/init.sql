@@ -1,0 +1,21 @@
+USE mysql;
+
+-- 사용자 생성
+CREATE USER '$DB_USERNAME'@'%' IDENTIFIED WITH mysql_native_password BY '$DB_PASSWORD';
+FLUSH PRIVILEGES;
+
+-- 데이터베이스 생성
+CREATE DATABASE app;
+GRANT ALL PRIVILEGES ON app.* TO '$DB_USERNAME'@'%';
+FLUSH PRIVILEGES;
+
+-- 데이터베이스 사용
+USE app;
+
+-- 테이블 생성
+CREATE TABLE `Student` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+s
