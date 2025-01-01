@@ -114,6 +114,14 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_PRIVATE_KEY }}
         script: |
+            export EC2_USERNAME=EC2_USERNAME=${{ secrets.EC2_USERNAME }}
+            export MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+            export DB_USERNAME=${{ secrets.DB_USERNAME }}
+            export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+            echo "DB_USERNAME = "${DB_USERNAME}
+            echo "DB_PASSWORD = "${DB_PASSWORD}
+
             sudo cat <<EOF > /home/${{ secrets.EC2_USERNAME }}/.env
             EC2_USERNAME=${{ secrets.EC2_USERNAME }}
             MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
@@ -122,9 +130,8 @@ jobs:
             DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
             EOF
             echo "Environment variables set."
-            echo "DB_USERNAME = "$DB_USERNAME
-
-            sudo cat <<EOF > /home/${EC2_USERNAME}/init.sql
+            
+            sudo cat <<EOF > /home/${{ secrets.EC2_USERNAME }}/init.sql
             USE mysql;
 
             -- 사용자 생성
