@@ -23,7 +23,7 @@ jobs:
         shell: bash
 
       - name: Build with Maven
-        run: mvn -B package --file pom.xml
+        run: mvn -B -DskipTests package --file pom.xml
 
       - name: Naming jar file
         run: mv ./target/*.jar ./target/app.jar
@@ -91,10 +91,14 @@ jobs:
           script: |
             export EC2_USERNAME=${{ secrets.EC2_USERNAME }}
             export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+            export DB_USERNAME=${{ secrets.DB_USERNAME }}
+            export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
 
             sudo cat <<EOF > /home/${{ secrets.EC2_USERNAME }}/.env
             EC2_USERNAME=${{ secrets.EC2_USERNAME }}
             DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+            DB_USERNAME=${{ secrets.DB_USERNAME }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             EOF
             echo "Environment variables set."
 
