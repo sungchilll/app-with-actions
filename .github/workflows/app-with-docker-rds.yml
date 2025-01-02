@@ -91,12 +91,14 @@ jobs:
           script: |
             export EC2_USERNAME=${{ secrets.EC2_USERNAME }}
             export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+            export RDS_ENDPOINT=${{ secrets.RDS_ENDPOINT }}
             export DB_USERNAME=${{ secrets.DB_USERNAME }}
             export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
 
             sudo cat <<EOF > /home/${{ secrets.EC2_USERNAME }}/.env
             EC2_USERNAME=${{ secrets.EC2_USERNAME }}
             DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+            RDS_ENDPOINT=${{ secrets.RDS_ENDPOINT }}
             DB_USERNAME=${{ secrets.DB_USERNAME }}
             DB_PASSWORD=${{ secrets.DB_PASSWORD }}
             EOF
