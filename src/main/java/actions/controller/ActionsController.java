@@ -23,6 +23,11 @@ public class ActionsController {
         return studentRepository.findAll();
     }
 
+    @GetMapping(value = "/actions")
+    public String actions() {
+        return "version: 0.0.1";
+    }
+
     // R: Get student by ID
     @GetMapping("/{id}")
     public ResponseEntity<Student> getStudentById(@PathVariable Long id) {
