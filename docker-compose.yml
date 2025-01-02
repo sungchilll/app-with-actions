@@ -1,37 +1,6 @@
 services:
-  db:
-    image: mysql:8.0
-    container_name: mysql-server
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: app
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - /home/${EC2_USERNAME}/init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - 3306:3306
-    healthcheck:
-      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD']
-      interval: 10s
-      timeout: 2s
-      retries: 100
-    networks:
-      - app-network
-
   app:
     image: "${DOCKERHUB_USERNAME}/app-with-actions:latest"
     container_name: backend-server
     ports:
       - 8080:8080
-    environment:
-      MYSQL_HOST: db
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - app-network
-
-networks:
-  app-network:
-    driver: bridge
